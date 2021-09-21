@@ -1,6 +1,6 @@
-# Image dump of Twitter tutorials
+# Image/Code dump of Twitter/Instagram tutorials
 
 ## How do you make them?
 
-* Adobe XD
-* Icons generally from [Flaticon](https://www.flaticon.com/) and [Noun Project](https://thenounproject.com/)
+* Images probably Adobe XD / Spark
+* Icons from [Flaticon](https://www.flaticon.com/) and [Noun Project](https://thenounproject.com/)
