@@ -1,3 +1,7 @@
+"""
+pip install ghapi pandas plotly streamlit 
+streamlit run streamlit_app.py
+"""
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -14,12 +18,14 @@ def load_api():
     token = st.secrets["github"]["key"]
     return GhApi(token=token)
 
+
 st.checkbox("Create Github API Connection")
 st.checkbox("Check rate-limit")
 st.checkbox("Add text input for user")
 st.checkbox("Check each repo existence")
 st.checkbox("Download star data from API")
 st.checkbox("Display plot with Plotly")
+
 
 @st.experimental_memo
 def check_repo(repo: str):
@@ -42,9 +48,7 @@ def search_stargazers(repo, per_page=30):
     api = load_api()
     username, repository = repo.split("/")
 
-    api.activity.list_stargazers_for_repo(
-				username, repository, per_page=per_page
-		)
+    api.activity.list_stargazers_for_repo(username, repository, per_page=per_page)
     n_pages = api.last_page()
 
     all_pages = pages(
@@ -57,8 +61,7 @@ def search_stargazers(repo, per_page=30):
     )
 
     data = [
-        {"date": item["starred_at"], "count": 1} 
-				for page in all_pages for item in page
+        {"date": item["starred_at"], "count": 1} for page in all_pages for item in page
     ]
     df = pd.DataFrame(data)
     df["date"] = pd.to_datetime(df["date"])
