@@ -2,9 +2,9 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 
-def read_index_html(copy_text: str):
+def read_index_html(copy_text: int):
     with open("index.html") as f:
-        return f.read().replace("python_string", str(copy_text))
+        return f.read().replace("python_string", f'"Counter value is {copy_text}"')
 
 
 if "counter" not in st.session_state:
