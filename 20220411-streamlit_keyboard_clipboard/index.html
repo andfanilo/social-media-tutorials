@@ -1,10 +1,10 @@
+<script>
 const streamlitDoc = window.parent.document;
 
-buttons = Array.from(streamlitDoc.querySelectorAll('button[kind=primary]'));
+const buttons = Array.from(streamlitDoc.querySelectorAll('button[kind=primary]'));
 
 const left_button = buttons.find(el => el.innerText === 'Decrement');
 const right_button = buttons.find(el => el.innerText === 'Increment');
-const copy_button = buttons.find(el => el.innerText === 'Copy To Clipboard');
 
 streamlitDoc.addEventListener('keydown', function(e) {
     switch (e.key) {
@@ -15,7 +15,9 @@ streamlitDoc.addEventListener('keydown', function(e) {
             right_button.click();
             break;
         case 'Enter':
-            copy_button.click();
-            break;
+            console.log(python_string);
+            //window.parent.navigator.clipboard.readText().then((d) => {console.log(python_string)})
+            window.parent.navigator.clipboard.writeText(python_string)
     }
 });
+</script>
