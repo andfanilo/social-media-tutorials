@@ -1,0 +1,11 @@
+credentials:
+  usernames:
+    andfanilo:
+      name: Fanilo Andrianasolo
+      email: contact@andfanilo.com
+      password: $2b$12$LwlHxFt6WLAQtHpo2BI44.dasUuoPZMKRt5zymWeakmnkKvdX7OHq
+cookie:
+  expiry_days: 30
+  key: some_signature_key
+  name: some_cookie_name
+# the password is "test"
