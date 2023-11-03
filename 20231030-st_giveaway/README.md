@@ -34,6 +34,10 @@ Select your account, acknowledge you're authenticating into a test app that wasn
 
 ![](./assets/login.png)
 
-## Resources
+## Helpful Resources
 
-- [Python Quickstart to Youtube Data API](https://developers.google.com/youtube/v3/quickstart/python#step_1_set_up_your_project_and_credentials).
+- [Python Quickstart to Youtube Data API](https://developers.google.com/youtube/v3/quickstart/python#step_1_set_up_your_project_and_credentials)
+- [YT Data API](https://developers.google.com/youtube/v3)
+- [YT Analytics API](https://developers.google.com/youtube/analytics/dimensions)
+- [Python Samples](https://github.com/youtube/api-samples/tree/master/python)
+- [Quotas](https://console.developers.google.com/iam-admin/quotas?service=youtubeanalytics.googleapis.com)
