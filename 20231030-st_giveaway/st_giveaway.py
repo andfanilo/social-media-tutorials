@@ -23,6 +23,7 @@ SCOPES = [
     "https://www.googleapis.com/auth/yt-analytics.readonly",
     "https://www.googleapis.com/auth/youtube.force-ssl",
 ]
+video_id = "xubQ0lsiV44"
 
 console = Console()
 
@@ -109,7 +110,7 @@ def main():
     channel_id = get_channel_id(yt_data)
     console.print(f"Analyzing for channel_id [yellow]{channel_id}")
 
-    comments_response = get_videoid_to_topcomments(yt_data, "xubQ0lsiV44")
+    comments_response = get_videoid_to_topcomments(yt_data, video_id)
 
     df = pd.json_normalize(comments_response)
 
