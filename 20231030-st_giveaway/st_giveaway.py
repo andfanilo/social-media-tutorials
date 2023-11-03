@@ -1,4 +1,4 @@
-"""Run with python scripts/giveaway.py from root of project"""
+"""Run with streamlit run st_giveaway.py from root of project"""
 import os
 import pickle
 from pathlib import Path

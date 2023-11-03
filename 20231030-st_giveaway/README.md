@@ -30,6 +30,10 @@ streamlit run st_giveaway.py
 
 On startup, a new browser tab should open with the Youtube authentication screen.
 
+Select your account, acknowledge you're authenticating into a test app that wasn't verified by Google (since it's yours), Select all and Continue. Your Streamlit app should now be logged into your YT account and able to download comments.
+
+![](./assets/login.png)
+
 ## Resources
 
 - [Python Quickstart to Youtube Data API](https://developers.google.com/youtube/v3/quickstart/python#step_1_set_up_your_project_and_credentials).
