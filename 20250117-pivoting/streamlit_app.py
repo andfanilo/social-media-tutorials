@@ -80,13 +80,14 @@ st.dataframe(pivot.loc[("2019", "ABC Corporation")])
 st.write(
     f"Earnings of ABC Corporation in 2019: {pivot.loc[('2019', 'ABC Corporation')].item():,d} $"
 )
+st.dataframe(pivot.loc[("2019", "ABC Corporation"), :]) # always add a column indexer
 
-# All selection options like slicing still possivle
-st.dataframe(pivot.loc["2019":"2020"])
-st.dataframe(pivot.loc[("2019", "ABC Corporation") : ("2020", "Eagle Security")])
+# All selection options like slicing still possible
+st.dataframe(pivot.loc["2019":"2020", :])
+st.dataframe(pivot.loc[("2019", "ABC Corporation") : ("2020", "Eagle Security"), :])
 
 # Selecting on the deeper Client level
-st.dataframe(pivot.swaplevel().loc["ABC Corporation"])
+st.dataframe(pivot.swaplevel().loc["ABC Corporation", :])
 
 # I don't want to swap levels and reorder though...
 # Cross-section to make specific value selections per level
@@ -120,7 +121,9 @@ pivot = pd.pivot_table(
 st.dataframe(pivot)
 
 # Partial indexing/slicing: don't need to specify all levels
-st.dataframe(pivot.loc[("Bridges Company", "2020", "Q1"), [("sum", "Amount"), ("mean", "Tax")]])
+st.dataframe(
+    pivot.loc[("Bridges Company", "2020", "Q1"), [("sum", "Amount"), ("mean", "Tax")]]
+)
 st.dataframe(pivot.loc[("Bridges Company"), "sum"])
 
 # Slice range on both row / column
@@ -145,7 +148,9 @@ st.dataframe(
 
 # Cross-section for specific values
 st.dataframe(pivot.xs("Q1", level="Quarter", drop_level=False))
-st.dataframe(pivot.xs(("Sol Company", "Q1"), level=("Client", "Quarter"), drop_level=False))
+st.dataframe(
+    pivot.xs(("Sol Company", "Q1"), level=("Client", "Quarter"), drop_level=False)
+)
 
 # Generic Slicing with IndexSlice
 st.dataframe(
