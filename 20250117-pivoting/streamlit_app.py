@@ -38,7 +38,7 @@ st.dataframe(pivot.sort_values("Amount", ascending=False))
 
 # Clients grouped as first-level index, you can select by label
 st.dataframe(pivot.loc["ABC Corporation"])
-st.write(f"Earnings of ABC Corporation: {pivot.loc['ABC Corporation'].item():,d} $")
+st.metric("Earnings of ABC Corporation", f"{pivot.loc['ABC Corporation'].item():,d} $")
 
 # Multiple selection
 st.dataframe(pivot.loc[["ABC Corporation", "Eagle Security"]])
@@ -78,9 +78,11 @@ st.dataframe(pivot)
 # Selecting by Index
 st.dataframe(pivot.loc["2019"])
 st.dataframe(pivot.loc[("2019", "ABC Corporation")])
-st.write(
-    f"Earnings of ABC Corporation in 2019: {pivot.loc[('2019', 'ABC Corporation')].item():,d} $"
+st.metric(
+    "Earnings of ABC Corporation in 2019",
+    f"{pivot.loc[('2019', 'ABC Corporation')].item():,d} $",
 )
+
 st.dataframe(pivot.loc[("2019", "ABC Corporation"), :])  # always add a column indexer
 
 # All selection options like slicing still possible
