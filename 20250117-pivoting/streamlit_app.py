@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -80,7 +81,7 @@ st.dataframe(pivot.loc[("2019", "ABC Corporation")])
 st.write(
     f"Earnings of ABC Corporation in 2019: {pivot.loc[('2019', 'ABC Corporation')].item():,d} $"
 )
-st.dataframe(pivot.loc[("2019", "ABC Corporation"), :]) # always add a column indexer
+st.dataframe(pivot.loc[("2019", "ABC Corporation"), :])  # always add a column indexer
 
 # All selection options like slicing still possible
 st.dataframe(pivot.loc["2019":"2020", :])
@@ -112,11 +113,16 @@ st.bar_chart(pivot.reset_index(), x="Year", y="Amount", color="Client", stack=Fa
 
 st.header("3. Measures by Client, Year, Quarter")
 
+
+def first_quantile(series):
+    return np.percentile(series, 25)
+
+
 pivot = pd.pivot_table(
     df,
     index=["Client", "Year", "Quarter"],
     values=["Amount", "Tax"],
-    aggfunc=["sum", "mean", "count", "std"],
+    aggfunc=["sum", "mean", "count", "std", first_quantile],
 )
 st.dataframe(pivot)
 
