@@ -47,7 +47,6 @@ st.dataframe(pivot.loc[[True, False, False, False, True, False, False]])
 st.dataframe(pivot.loc[lambda data: data.index.str.endswith("Company")])
 
 # Plot index as x, Amount as y
-st.bar_chart(pivot, x=None, y="Amount")
 st.plotly_chart(
     px.bar(pivot, x=None, y="Amount"),
     key="basic_chart",
@@ -77,6 +76,7 @@ st.dataframe(pivot)
 
 # Selecting by Index
 st.dataframe(pivot.loc["2019"])
+st.dataframe(pivot.loc["2019"].loc["ABC Corporation"])
 st.dataframe(pivot.loc[("2019", "ABC Corporation")])
 st.metric(
     "Earnings of ABC Corporation in 2019",
@@ -89,11 +89,12 @@ st.dataframe(pivot.loc[("2019", "ABC Corporation"), :])  # always add a column i
 st.dataframe(pivot.loc["2019":"2020", :])
 st.dataframe(pivot.loc[("2019", "ABC Corporation") : ("2020", "Eagle Security"), :])
 
-# Selecting on the deeper Client level
+# Selecting on the deeper Client level (not in video)
 st.dataframe(pivot.swaplevel().loc["ABC Corporation", :])
 
 # I don't want to swap levels and reorder though...
 # Cross-section to make specific value selections per level
+# (not in video)
 st.dataframe(pivot.xs("ABC Corporation", level="Client"))
 
 # Multiindex Slicer is the generic way for multilevel custom selection
@@ -101,6 +102,34 @@ st.dataframe(pivot.xs("ABC Corporation", level="Client"))
 idx = pd.IndexSlice
 st.dataframe(pivot.loc[idx[:, "ABC Corporation"], :])
 st.dataframe(pivot.loc[idx["2019":"2020", "A":"E"], :])
+st.dataframe(
+    pivot.loc[
+        idx[
+            pivot.index.get_level_values("Year").astype(int) % 2 == 0,
+            pivot.index.get_level_values("Client").str.endswith("Corporation"),
+        ],
+        :,
+    ]
+)
+
+# More levels for fun
+harder_pivot = pd.pivot_table(
+    df,
+    index=["Year", "Quarter", "Month", "Client"],
+    values="Amount",
+    aggfunc="sum",
+)
+st.dataframe(harder_pivot)
+st.dataframe(
+    harder_pivot.loc[
+        idx[
+            ["2020", "2022"],
+            harder_pivot.index.get_level_values("Quarter").str[-1].astype(int) % 2 != 0,
+            :,
+            harder_pivot.index.get_level_values("Client").str.endswith("Corporation"),
+        ],
+    ]
+)
 
 # Charting
 st.dataframe(pivot.reset_index("Year"))
@@ -154,7 +183,7 @@ st.dataframe(
     ]
 )
 
-# Cross-section for specific values
+# Cross-section for specific values (not shown in video)
 st.dataframe(pivot.xs("Q1", level="Quarter", drop_level=False))
 st.dataframe(
     pivot.xs(("Sol Company", "Q1"), level=("Client", "Quarter"), drop_level=False)
@@ -163,8 +192,12 @@ st.dataframe(
 # Generic Slicing with IndexSlice
 st.dataframe(
     pivot.loc[
-        idx["A":"C", "2020", ["Q1", "Q4"]],
-        ["sum", "mean"],
+        idx[
+            pivot.index.get_level_values("Client").str.endswith("Corporation"),
+            "2020",
+            ["Q1", "Q4"],
+        ],
+        [("sum", "Amount"), ("first_quantile", "Tax")],
     ]
 )
 
