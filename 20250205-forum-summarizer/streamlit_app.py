@@ -3,8 +3,8 @@ Before running, create .streamlit > secrets.toml file to contain OpenAI API key 
 OPENAI_API_KEY="sk-proj-XXX"
 """
 
+from typing import Dict
 from typing import List
-
 import requests
 import streamlit as st
 import tiktoken
@@ -19,8 +19,8 @@ from pydantic import computed_field
 
 st.set_page_config(page_title="Forum Summarizer")
 
-if "generated_idea" not in st.session_state:
-    st.session_state.generated_idea = ""
+if "generated_summary" not in st.session_state:
+    st.session_state.generated_summary = ""
 
 BASE_URL = "https://discuss.streamlit.io"
 
@@ -91,67 +91,74 @@ class PostResponse(BaseModel):
 
 
 @st.cache_data
+def query_forum(url: str) -> Dict:
+    r = requests.get(url)
+    r.raise_for_status()
+    return r.json()
+
+
+def get_top_topics() -> TopResponse:
+    data = query_forum(f"{BASE_URL}/top.json?period=monthly")
+    return TopResponse.model_validate(data)
+
+
+def get_post(url: str) -> PostResponse:
+    data = query_forum(url)
+    return PostResponse.model_validate(data)
+
+
+def download_all_top_posts(all_topics: TopResponse) -> List[PostResponse]:
+    number_posts = len(all_topics.topic_list.topics)
+    progress_bar = st.progress(0, text="Downloading")
+
+    def download_post(idx, topic) -> PostResponse:
+        progress_bar.progress(idx / number_posts, text=f"Downloading **{topic.title}**")
+        return get_post(topic.url)
+
+    all_posts = [
+        download_post(idx, topic)
+        for idx, topic in enumerate(all_topics.topic_list.topics)
+    ]
+    progress_bar.empty()
+    return all_posts
+
+
+@st.cache_data
 def count_tokens(prompt: str) -> int:
     """Approximate token count using tiktoken"""
     encoding = tiktoken.get_encoding("cl100k_base")  # GPT-4 encoding
     return len(encoding.encode(prompt))
 
 
-@st.cache_data
-def get_top_topics():
-    r = requests.get(f"{BASE_URL}/top.json?period=monthly")
-    r.raise_for_status()
-    return TopResponse.model_validate(r.json())
-
-
-@st.cache_data
-def get_post(url: str):
-    r = requests.get(url)
-    r.raise_for_status()
-    return PostResponse.model_validate(r.json())
-
-
-def generate_full_prompt(all_topics: TopResponse, number_posts: int = 40) -> str:
+def generate_full_prompt(all_posts: List[PostResponse], number_posts: int = 50) -> str:
     prompt_prefix = """Analyze the following forum topics and comments to:
     1. Identify the top 5 pain points users are experiencing
     2. Suggest potential solutions for each pain point
     3. Prioritize them by frequency of mention
     """
-    forum_content = "\n\n".join(
-        [
-            get_post(topic.url).clean_post
-            for topic in all_topics.topic_list.topics[:number_posts]
-        ]
-    )
+    forum_content = "\n\n".join([post.clean_post for post in all_posts[:number_posts]])
     return "\n\n".join([prompt_prefix, forum_content])
-
-
-def generate_callback(full_prompt):
-    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-    response = client.chat.completions.create(
-        model="gpt-4o", messages=[{"role": "user", "content": full_prompt}]
-    )
-    st.session_state.generated_idea = response.choices[0].message.content
 
 
 ##################################################
 ### USER INTERFACE
 ##################################################
 
-st.title("💡 Pain Points Summarizer from latest Streamlit Forum posts")
+st.title("💡 Summarizer from Monthly Top Streamlit Forum")
 
 top_topics = get_top_topics()
+all_posts = download_all_top_posts(top_topics)
 
-with st.expander(f"List {len(top_topics.topic_list.topics)} posts data"):
-    selected_url = st.selectbox(
-        "Select URL",
-        [topic.url for topic in top_topics.topic_list.topics],
+with st.expander(f"List {len(all_posts)} posts data"):
+    all_posts_details = {post.fancy_title: post.clean_post_stream for post in all_posts}
+    selected_post = st.selectbox(
+        "Select Post",
+        all_posts_details.keys(),
     )
-    post_data = get_post(selected_url)
+    st.markdown(all_posts_details.get(selected_post))
 
-    st.markdown(post_data.clean_post)
-
-full_prompt = generate_full_prompt(top_topics)
+number_posts = st.slider("How many posts to summarize?", 1, len(all_posts), 25)
+full_prompt = generate_full_prompt(all_posts, number_posts)
 token_count = count_tokens(full_prompt)
 
 tiktoken_disclaimer_column, submit_button_column = st.columns(
@@ -160,13 +167,21 @@ tiktoken_disclaimer_column, submit_button_column = st.columns(
 tiktoken_disclaimer_column.write(
     f"Generation will consume approx. {token_count} tokens"
 )
-submit_button_column.button(
+submit_summary = submit_button_column.button(
     "Generate ideas",
     type="primary",
     use_container_width=True,
-    on_click=generate_callback,
-    args=(full_prompt,),
 )
 
-if st.session_state.generated_idea:
-    st.markdown(st.session_state.generated_idea)
+if submit_summary:
+    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+    stream = client.chat.completions.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": full_prompt}],
+        stream=True,
+    )
+    response = st.write_stream(stream)
+    st.session_state.generated_summary = response
+
+if st.session_state.generated_summary and not submit_summary:
+    st.markdown(st.session_state.generated_summary)
