@@ -5,6 +5,7 @@ OPENAI_API_KEY="sk-proj-XXX"
 
 from typing import Dict
 from typing import List
+from typing import Optional
 import requests
 import streamlit as st
 import tiktoken
@@ -85,6 +86,32 @@ class PostResponse(BaseModel):
         return f"# Topic Title: {self.fancy_title} \n\n {self.clean_post_stream}"
 
 
+class PainPointDetails(BaseModel):
+    details: str
+    python_code_example: str
+
+
+class SolutionDetails(BaseModel):
+    details: str
+    python_code_example: str
+
+
+class PainPoint(BaseModel):
+    hook: str
+    summary_explanation: str
+    detailed_explanation: Optional[PainPointDetails]
+    solution: Optional[SolutionDetails]
+
+
+class OpenAIResponse(BaseModel):
+    abstract: str
+    pain_point_1: PainPoint
+    pain_point_2: PainPoint
+    pain_point_3: PainPoint
+    pain_point_4: PainPoint
+    pain_point_5: PainPoint
+
+
 ##################################################
 ### QUERYING
 ##################################################
@@ -140,6 +167,21 @@ def generate_full_prompt(all_posts: List[PostResponse], number_posts: int = 50) 
     return "\n\n".join([prompt_prefix, forum_content])
 
 
+def submit_openai_callback(content):
+    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+    with st.spinner("Generating summary..."):
+        completion = client.beta.chat.completions.parse(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": content}],
+            response_format=OpenAIResponse,
+        )
+    generated_summary = completion.choices[0].message
+    if generated_summary.refusal:
+        raise ValueError("Problem in OpenAI generation, try again")
+    else:
+        st.session_state.generated_summary = generated_summary.parsed
+
+
 ##################################################
 ### USER INTERFACE
 ##################################################
@@ -157,9 +199,11 @@ with st.expander(f"List {len(all_posts)} posts data"):
     )
     st.markdown(all_posts_details.get(selected_post))
 
+
 number_posts = st.slider("How many posts to summarize?", 1, len(all_posts), 25)
 full_prompt = generate_full_prompt(all_posts, number_posts)
 token_count = count_tokens(full_prompt)
+
 
 tiktoken_disclaimer_column, submit_button_column = st.columns(
     (3, 1), vertical_alignment="center"
@@ -171,17 +215,26 @@ submit_summary = submit_button_column.button(
     "Generate ideas",
     type="primary",
     use_container_width=True,
+    on_click=submit_openai_callback,
+    args=(full_prompt,),
 )
 
-if submit_summary:
-    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-    stream = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": full_prompt}],
-        stream=True,
-    )
-    response = st.write_stream(stream)
-    st.session_state.generated_summary = response
+if st.session_state.generated_summary:
+    generated_summary: OpenAIResponse = st.session_state.generated_summary
 
-if st.session_state.generated_summary and not submit_summary:
-    st.markdown(st.session_state.generated_summary)
+    st.header("Summary")
+    st.write(generated_summary.abstract)
+
+    for pain_point in [f"pain_point_{i}" for i in range(1, 6)]:
+        point = getattr(generated_summary, pain_point)
+        st.subheader(point.hook)
+        st.markdown(point.summary_explanation)
+
+        if point.detailed_explanation:
+            st.markdown(":blue[**Details**]")
+            st.write(point.detailed_explanation.details)
+            st.code(point.detailed_explanation.python_code_example)
+        if point.solution:
+            st.markdown(":green[**Solution**]")
+            st.write(point.solution.details)
+            st.code(point.solution.python_code_example)
