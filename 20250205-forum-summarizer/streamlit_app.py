@@ -35,7 +35,6 @@ class Topic(BaseModel):
     slug: str
     title: str
 
-    @computed_field
     @property
     def url(self) -> str:
         return f"{BASE_URL}/t/{self.slug}/{self.id}.json"
@@ -56,7 +55,6 @@ class Post(BaseModel):
     cooked: str
     accepted_answer: bool
 
-    @computed_field
     @property
     def clean_text(self) -> str:
         soup = BeautifulSoup(self.cooked, "html.parser")
@@ -67,12 +65,11 @@ class PostList(BaseModel):
     posts: List[Post]
 
 
-class PostResponse(BaseModel):
+class TopicResponse(BaseModel):
     id: int
     fancy_title: str
     post_stream: PostList
 
-    @computed_field
     @property
     def clean_post_stream(self) -> str:
         return "\n\n".join(
@@ -80,7 +77,6 @@ class PostResponse(BaseModel):
             for i, p in enumerate(self.post_stream.posts)
         )
 
-    @computed_field
     @property
     def clean_post(self) -> str:
         return f"# Topic Title: {self.fancy_title} \n\n {self.clean_post_stream}"
@@ -129,25 +125,21 @@ def get_top_topics() -> TopResponse:
     return TopResponse.model_validate(data)
 
 
-def get_post(url: str) -> PostResponse:
-    data = query_forum(url)
-    return PostResponse.model_validate(data)
-
-
-def download_all_top_posts(all_topics: TopResponse) -> List[PostResponse]:
+def download_all_top_topics(all_topics: TopResponse) -> List[TopicResponse]:
     number_posts = len(all_topics.topic_list.topics)
     progress_bar = st.progress(0, text="Downloading")
 
-    def download_post(idx, topic) -> PostResponse:
+    def download_topic(idx, topic) -> TopicResponse:
         progress_bar.progress(idx / number_posts, text=f"Downloading **{topic.title}**")
-        return get_post(topic.url)
+        data = query_forum(topic.url)
+        return TopicResponse.model_validate(data)
 
-    all_posts = [
-        download_post(idx, topic)
+    all_topics = [
+        download_topic(idx, topic)
         for idx, topic in enumerate(all_topics.topic_list.topics)
     ]
     progress_bar.empty()
-    return all_posts
+    return all_topics
 
 
 @st.cache_data
@@ -157,7 +149,7 @@ def count_tokens(prompt: str) -> int:
     return len(encoding.encode(prompt))
 
 
-def generate_full_prompt(all_posts: List[PostResponse], number_posts: int = 50) -> str:
+def generate_full_prompt(all_posts: List[TopicResponse], number_posts: int = 50) -> str:
     prompt_prefix = """Analyze the following forum topics and comments to:
     1. Identify the top 5 pain points users are experiencing
     2. Suggest potential solutions for each pain point
@@ -189,19 +181,21 @@ def submit_openai_callback(content):
 st.title("💡 Summarizer from Monthly Top Streamlit Forum")
 
 top_topics = get_top_topics()
-all_posts = download_all_top_posts(top_topics)
+all_top_topics = download_all_top_topics(top_topics)
 
-with st.expander(f"List {len(all_posts)} posts data"):
-    all_posts_details = {post.fancy_title: post.clean_post_stream for post in all_posts}
-    selected_post = st.selectbox(
+with st.expander(f"List {len(all_top_topics)} posts data"):
+    all_topics_detail = {
+        topic.fancy_title: topic.clean_post_stream for topic in all_top_topics
+    }
+    selected_topic = st.selectbox(
         "Select Post",
-        all_posts_details.keys(),
+        all_topics_detail.keys(),
     )
-    st.markdown(all_posts_details.get(selected_post))
+    st.markdown(all_topics_detail.get(selected_topic))
 
 
-number_posts = st.slider("How many posts to summarize?", 1, len(all_posts), 25)
-full_prompt = generate_full_prompt(all_posts, number_posts)
+number_topics = st.slider("How many posts to summarize?", 1, len(all_top_topics), 25)
+full_prompt = generate_full_prompt(all_top_topics, number_topics)
 token_count = count_tokens(full_prompt)
 
 
