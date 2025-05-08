@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <!-- From https://picocss.com/docs#usage-from-cdn -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <!-- From https://www.jsdelivr.com/package/npm/echarts -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js "></script>
+    <style>
+        .chart-container {
+            display: flex;
+            height: 32rem;
+            gap: 1rem;
+        }
+
+        #main {
+            /*background-color: red;*/
+            flex: 1;
+            min-height: 0;
+        }
+
+        #aux {
+            /*background-color: green;*/
+            flex: 1;
+            min-height: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container">
+        <h1>ECharts App</h1>
+        <section class="chart-container">
+            <div id="main">Main Chart</div>
+            <div id="aux">Aux chart</div>
+        </section>
+    </main>
+    <script>
+        // Initialize the echarts instance based on the prepared dom
+        const mainChart = echarts.init(document.getElementById('main'));
+        const auxChart = echarts.init(document.getElementById('aux'));
+
+        // Specify the configuration items and data for the chart
+        const option = {
+            legend: {
+                data: ['sales']
+            },
+            xAxis: {
+                data: ['Shirts', 'Cardigans', 'Chiffons', 'Pants', 'Heels', 'Socks']
+            },
+            yAxis: {},
+            series: [
+                {
+                    name: 'sales',
+                    type: 'bar',
+                    data: [5, 20, 36, 10, 10, 20]
+                }
+            ]
+        };
+
+        // Display the chart using the configuration items and data just specified.
+        mainChart.setOption(option);
+
+        // Update right chart
+        mainChart.on('mouseover', function (params) {
+            console.log(params)
+            if (params.componentType === 'series') {
+                fetch(`http://localhost:8000/data/${params.name}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const options = JSON.parse(data);
+                        console.log(options);
+                        auxChart.setOption(options);
+                    })
+                    .catch(error => console.error('Error on updating:', error));
+            }
+        });
+
+        window.addEventListener('resize', function () {
+            mainChart.resize();
+            auxChart.resize();
+        });
+    </script>
+</body>
+
+</html>
