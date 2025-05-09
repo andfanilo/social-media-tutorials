@@ -13,24 +13,27 @@
         h1 {
             color: #174C4F;
         }
-
+        
         .chart-container {
             display: flex;
             height: 32rem;
             gap: 1rem;
         }
 
-        #main {
-            /*background-color: red;*/
+        .chart-item {
             flex: 1;
             min-height: 0;
         }
 
-        #aux {
-            /*background-color: green;*/
-            flex: 1;
-            min-height: 0;
+        /*
+        #main {
+            background-color: red;
         }
+
+        #aux {
+            background-color: green;
+        }
+        */
     </style>
 </head>
 
@@ -38,8 +41,8 @@
     <main class="container">
         <h1>ECharts App</h1>
         <section class="chart-container">
-            <div id="main">Main Chart</div>
-            <div id="aux">Aux chart</div>
+            <div id="main" class="chart-item">Main Chart</div>
+            <div id="aux"  class="chart-item">Aux chart</div>
         </section>
     </main>
     <script>
