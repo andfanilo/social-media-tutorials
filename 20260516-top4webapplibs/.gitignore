@@ -1,0 +1,16 @@
+*.py[cod]
+assets/external/
+.web
+.states
+*.db
+# Python-generated files
+__pycache__/
+__marimo__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
